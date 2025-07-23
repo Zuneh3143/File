@@ -1,0 +1,691 @@
+local repo = "https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/"
+
+local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
+shared.Voidware_InkGame_Library = Library
+local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
+local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+local Options = getgenv().Linoria.Options
+local Toggles = getgenv().Linoria.Toggles
+
+local Window = Library:CreateWindow({
+Title = "Rixz Hub | Forsaken | Ves 1.0",
+
+Center = true,  
+AutoShow = true,  
+Resizable = true,  
+ShowCustomCursor = true,  
+TabPadding = 2,  
+MenuFadeTime = 0
+
+})
+
+local Tabs = {
+Main = Window:AddTab("Fucntion"),
+["UI Settings"] = Window:AddTab("UI Settings"),
+}
+
+-- Hàm to thông báo có âm thanh
+function UiNotify(title, desc, time, soundId)
+-- Thông báo
+Library:Notify({
+Title = title or "Thông báo",
+Description = desc or "",
+Time = time or 3
+})
+
+-- To âm thanh và phát  
+local sound = Instance.new("Sound")  
+sound.SoundId = "rbxassetid://4590662766"  
+sound.Volume = 2  
+sound.PlayOnRemove = true  
+sound.Parent = game:GetService("CoreGui") -- hoc workspace  
+sound:Destroy() -- s phát v PlayOnRemove = true
+
+end
+
+
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local IYMouse = Players.LocalPlayer:GetMouse()
+local FLYING = false
+local QEfly = true
+local iyflyspeed = 1
+local vehicleflyspeed = 1
+
+local function sFLY(vfly)
+	repeat wait() until Players.LocalPlayer and Players.LocalPlayer.Character and Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart") and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+	repeat wait() until IYMouse
+	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+
+	local T = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+	local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+	local SPEED = 0
+
+	local function FLY()
+		FLYING = true
+		local BG = Instance.new('BodyGyro')
+		local BV = Instance.new('BodyVelocity')
+		BG.P = 9e4
+		BG.Parent = T
+		BV.Parent = T
+		BG.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+		BG.CFrame = T.CFrame
+		BV.Velocity = Vector3.new(0, 0, 0)
+		BV.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+		task.spawn(function()
+			repeat wait()
+				if not vfly and Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+					Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = true
+				end
+				if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
+					SPEED = 50
+				elseif not (CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0) and SPEED ~= 0 then
+					SPEED = 0
+				end
+				if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
+					BV.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
+				elseif (CONTROL.L + CONTROL.R) == 0 and (CONTROL.F + CONTROL.B) == 0 and (CONTROL.Q + CONTROL.E) == 0 and SPEED ~= 0 then
+					BV.Velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+				else
+					BV.Velocity = Vector3.new(0, 0, 0)
+				end
+				BG.CFrame = workspace.CurrentCamera.CoordinateFrame
+			until not FLYING
+			CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+			lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+			SPEED = 0
+			BG:Destroy()
+			BV:Destroy()
+			if Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+				Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+			end
+		end)
+	end
+	flyKeyDown = IYMouse.KeyDown:Connect(function(KEY)
+		if KEY:lower() == 'w' then
+			CONTROL.F = (vfly and vehicleflyspeed or iyflyspeed)
+		elseif KEY:lower() == 's' then
+			CONTROL.B = - (vfly and vehicleflyspeed or iyflyspeed)
+		elseif KEY:lower() == 'a' then
+			CONTROL.L = - (vfly and vehicleflyspeed or iyflyspeed)
+		elseif KEY:lower() == 'd' then 
+			CONTROL.R = (vfly and vehicleflyspeed or iyflyspeed)
+		elseif QEfly and KEY:lower() == 'e' then
+			CONTROL.Q = (vfly and vehicleflyspeed or iyflyspeed)*2
+		elseif QEfly and KEY:lower() == 'q' then
+			CONTROL.E = -(vfly and vehicleflyspeed or iyflyspeed)*2
+		end
+		pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
+	end)
+	flyKeyUp = IYMouse.KeyUp:Connect(function(KEY)
+		if KEY:lower() == 'w' then
+			CONTROL.F = 0
+		elseif KEY:lower() == 's' then
+			CONTROL.B = 0
+		elseif KEY:lower() == 'a' then
+			CONTROL.L = 0
+		elseif KEY:lower() == 'd' then
+			CONTROL.R = 0
+		elseif KEY:lower() == 'e' then
+			CONTROL.Q = 0
+		elseif KEY:lower() == 'q' then
+			CONTROL.E = 0
+		end
+	end)
+	FLY()
+end
+
+local function NOFLY()
+	FLYING = false
+	if flyKeyDown or flyKeyUp then flyKeyDown:Disconnect() flyKeyUp:Disconnect() end
+	if Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid') then
+		Players.LocalPlayer.Character:FindFirstChildOfClass('Humanoid').PlatformStand = false
+	end
+	pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Custom end)
+end
+
+local velocityHandlerName = "BodyVelocity"
+local gyroHandlerName = "BodyGyro"
+local mfly1
+local mfly2
+
+local function UnMobileFly()
+	pcall(function()
+		FLYING = false
+		local root = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+		root:FindFirstChild(velocityHandlerName):Destroy()
+		root:FindFirstChild(gyroHandlerName):Destroy()
+		Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid").PlatformStand = false
+		mfly1:Disconnect()
+		mfly2:Disconnect()
+	end)
+end
+
+local function MobileFly()
+	UnMobileFly()
+	FLYING = true
+
+	local root = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+	local camera = workspace.CurrentCamera
+	local v3none = Vector3.new()
+	local v3zero = Vector3.new(0, 0, 0)
+	local v3inf = Vector3.new(9e9, 9e9, 9e9)
+
+	local controlModule = require(Players.LocalPlayer.PlayerScripts:WaitForChild("PlayerModule"):WaitForChild("ControlModule"))
+	local bv = Instance.new("BodyVelocity")
+	bv.Name = velocityHandlerName
+	bv.Parent = root
+	bv.MaxForce = v3zero
+	bv.Velocity = v3zero
+
+	local bg = Instance.new("BodyGyro")
+	bg.Name = gyroHandlerName
+	bg.Parent = root
+	bg.MaxTorque = v3inf
+	bg.P = 1000
+	bg.D = 50
+
+	mfly1 = Players.LocalPlayer.CharacterAdded:Connect(function()
+		local bv = Instance.new("BodyVelocity")
+		bv.Name = velocityHandlerName
+		bv.Parent = root
+		bv.MaxForce = v3zero
+		bv.Velocity = v3zero
+
+		local bg = Instance.new("BodyGyro")
+		bg.Name = gyroHandlerName
+		bg.Parent = root
+		bg.MaxTorque = v3inf
+		bg.P = 1000
+		bg.D = 50
+	end)
+
+	mfly2 = RunService.RenderStepped:Connect(function()
+		root = Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+		camera = workspace.CurrentCamera
+		if Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid") and root and root:FindFirstChild(velocityHandlerName) and root:FindFirstChild(gyroHandlerName) then
+			local humanoid = Players.LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+			local VelocityHandler = root:FindFirstChild(velocityHandlerName)
+			local GyroHandler = root:FindFirstChild(gyroHandlerName)
+
+			VelocityHandler.MaxForce = v3inf
+			GyroHandler.MaxTorque = v3inf
+			humanoid.PlatformStand = true
+			GyroHandler.CFrame = camera.CoordinateFrame
+			VelocityHandler.Velocity = v3none
+
+			local direction = controlModule:GetMoveVector()
+			if direction.X > 0 then
+				VelocityHandler.Velocity = VelocityHandler.Velocity + camera.CFrame.RightVector * (direction.X * ((iyflyspeed) * 50))
+			end
+			if direction.X < 0 then
+				VelocityHandler.Velocity = VelocityHandler.Velocity + camera.CFrame.RightVector * (direction.X * ((iyflyspeed) * 50))
+			end
+			if direction.Z > 0 then
+				VelocityHandler.Velocity = VelocityHandler.Velocity - camera.CFrame.LookVector * (direction.Z * ((iyflyspeed) * 50))
+			end
+			if direction.Z < 0 then
+				VelocityHandler.Velocity = VelocityHandler.Velocity - camera.CFrame.LookVector * (direction.Z * ((iyflyspeed) * 50))
+			end
+		end
+	end)
+end
+
+UiNotify("Loader Success!!", 3)
+
+local TabBox = Tabs.Main:AddLeftTabbox() -- Add Tabbox on left side
+
+local PlayersM = TabBox:AddTab('Local Player')
+local Esp = TabBox:AddTab('Esp')
+
+
+getgenv().speedValue = 16
+PlayersM:AddSlider('MySlider', {
+    Text = 'Speed Player',
+    Default = 16,
+    Min = 0,
+    Max = 35,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(val)
+        getgenv().speedValue = val
+        if getgenv().speedEnabled then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if hum then hum.WalkSpeed = val end
+        end
+        end
+})
+
+
+getgenv().jumpValue = 50
+PlayersM:AddSlider('MySlider', {
+    Text = 'Jump Player',
+    Default = 50,
+    Min = 0,
+    Max = 150,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(val)
+        getgenv().jumpValue = val
+        if getgenv().jumpEnabled then
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
+            if hum then hum.JumpPower= val end
+        end
+    end
+})
+
+PlayersM:AddSlider('MySlider', {
+    Text = 'Speed Fly',
+    Default = 2.2,
+    Min = 0,
+    Max = 10,
+    Rounding = 1,
+    Compact = false,
+    Callback = function(Value)
+        CurrentValue = Value
+iyflyspeed = Value
+end,  iyflyspeed = CurrentValue,
+})
+
+PlayersM:AddDivider()
+
+getgenv().speedEnabled = false
+PlayersM:AddToggle('MyToggle', {
+    Text = 'Enable Speed',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
+
+    Callback = function(v)
+        getgenv().speedEnabled = v
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = v and getgenv().speedValue or 16 end
+end,
+})
+
+getgenv().jumpEnabled = false
+PlayersM:AddToggle('MyToggle', {
+    Text = 'Enable Jump',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
+
+    Callback = function(v)
+        getgenv().jumpEnabled = v
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local hum = char:FindFirstChild("Humanoid")
+        if hum then hum.JumpPower = v and getgenv().jumpValue or 50 end
+end,
+})
+
+task.spawn(function()
+    while true do
+        task.wait(0.15)
+        if not Char or not Humanoid then refreshChar() end
+
+        if Humanoid then
+            Humanoid.WalkSpeed = speedValue
+            Humanoid.JumpPower = jumpValue
+        end
+
+        if autoCollect then
+            local houses = workspace:FindFirstChild("GameFolder") and workspace.GameFolder:FindFirstChild("HouseFolder")
+            if houses then
+                for _, house in pairs(houses:GetChildren()) do
+                    local display = house:FindFirstChild("Display")
+                    if display then
+                        for _, pad in pairs(display:GetChildren()) do
+                            local part = pad:FindFirstChild("CollectPart")
+                            local ui = part and part:FindFirstChild("UI")
+                            local amountLabel = ui and ui:FindFirstChild("Frame") and ui.Frame:FindFirstChild("AmountText")
+                            if part and amountLabel and part:IsA("BasePart") and part.Color == Color3.fromRGB(0, 255, 0) then
+                                local text = amountLabel.Text
+                                if text and text:match("%d") and not text:find("$0") then
+                                    LP.Character:MoveTo(part.Position + Vector3.new(0, 3, 0))
+                                    firetouchinterest(LP.Character.HumanoidRootPart, part, 0)
+                                    firetouchinterest(LP.Character.HumanoidRootPart, part, 1)
+                                    task.wait(0.15)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        if autoRebirth and RS:FindFirstChild("Remotes") and RS.Remotes:FindFirstChild("Rebirth") then
+            RS.Remotes.Rebirth:FireServer()
+        end
+
+        if lockToLegendary then
+            local charFolder = workspace:FindFirstChild("GameFolder") and workspace.GameFolder:FindFirstChild("CharacterFolder")
+            if charFolder then
+                for _, npc in pairs(charFolder:GetChildren()) do
+                    if npc:FindFirstChild("Torso") then
+                        LP.Character:MoveTo(npc.Torso.Position + Vector3.new(0, 3, 0))
+                        break
+                    end
+                end
+            end
+        end
+    end
+end)
+
+PlayersM:AddToggle('MyToggle', {
+    Text = 'Enable Fly',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
+
+    Callback = function(Value)
+        ActivateFly = Value 
+task.spawn(function()
+if not FLYING and ActivateFly then
+			if UserInputService.TouchEnabled then
+				MobileFly()
+			else
+task.spawn(function()
+if not AlrActivatedFlyPC then 
+AlrActivatedFlyPC = true
+Rayfield:Notify({
+   Title = "Fly",
+   Content = "When you enable to fly you can press F to fly/unfly (it won't disable the button!)",
+   Duration = 5,
+   Image = "rewind",
+})
+end
+end)
+				NOFLY()
+				wait()
+				sFLY()
+			end
+		elseif FLYING and not ActivateFly then
+			if UserInputService.TouchEnabled then
+				UnMobileFly()
+			else
+				NOFLY()
+			end
+		end
+end)
+end,
+})
+
+PlayersM:AddToggle('MyToggle', {
+    Text = 'Enable inf jump',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
+
+    Callback = function(Value)
+        infiniteJumpEnabled = Value
+end,
+})
+
+local UserInputService = game:GetService("UserInputService")
+UserInputService.JumpRequest:Connect(function()
+    if infiniteJumpEnabled then
+        local char = game.Players.LocalPlayer.Character
+        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+--Esp
+Esp:AddToggle("ESP_Killers", {
+Text = "Esp Killers",
+Default = false,
+Callback = function(Value)
+ToggleKillersESP(Value)
+end
+})
+
+
+Esp:AddToggle("ESP_Survivors", {
+Text = "Esp Survivors",
+Default = false,
+Callback = function(Value)
+ToggleSurvivorsESP(Value)
+end
+})
+
+Esp:AddToggle("ESP_Survivors", {
+Text = "Esp Generator",
+Default = false,
+Callback = function(Value)
+ToggleGeneratorESP(Value)
+end
+})
+
+
+
+-- To toggle flags
+local ESP_Killers = false
+local ESP_Survivors = false
+local ESP_Generators = false
+
+-- Default text size (slider trong UI)
+local PlayerTextSize = 16
+local GeneratorTextSize = 16
+
+-- Hàm tính khong cách
+local function GetDistance(pos)
+return math.floor((Camera.CFrame.Position - pos).Magnitude)
+end
+
+-- Hàm to Billboard
+local function CreateBillboard(parent, offset, name, size)
+local billboard = Instance.new("BillboardGui")
+billboard.Size = UDim2.new(0, 150, 0, 40)
+billboard.StudsOffset = offset or Vector3.new(0, 3, 0)
+billboard.AlwaysOnTop = true
+billboard.Name = name
+billboard.Parent = parent
+
+local label = Instance.new("TextLabel")  
+label.Size = UDim2.new(1, 0, 1, 0)  
+label.BackgroundTransparency = 1  
+label.TextColor3 = Color3.fromRGB(255, 255, 255)  
+label.TextStrokeTransparency = 0.2  
+label.TextScaled = false  
+label.Font = Enum.Font.Oswald  
+label.TextSize = size or 16  
+label.Text = ""  
+label.Parent = billboard  
+return label
+
+end
+
+
+---
+
+-- Player ESP
+
+local function CreatePlayerESP(character, color, nameText)
+if not character:FindFirstChild("Head") then return end
+
+-- Highlight  
+if not character:FindFirstChild("ESP_Highlight") then  
+    local highlight = Instance.new("Highlight")  
+    highlight.FillColor = color  
+    highlight.OutlineColor = color  
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop  
+    highlight.Name = "ESP_Highlight"  
+    highlight.Parent = character  
+end  
+
+-- Name trên u (Killer cao nht)  
+local offset = Vector3.new(0, (nameText == "Killer") and 7 or 4, 0)  
+if not character.Head:FindFirstChild("ESP_Name") then  
+    local label = CreateBillboard(character.Head, offset, "ESP_Name", PlayerTextSize)  
+    label.TextColor3 = color  
+    label.Text = nameText  
+end  
+
+-- Distance di chân  
+if not character:FindFirstChild("ESP_Distance") then  
+    local part = Instance.new("Part")  
+    part.Name = "ESP_Distance"  
+    part.Anchored = true  
+    part.CanCollide = false  
+    part.Transparency = 1  
+    part.Size = Vector3.new(1, 1, 1)  
+    part.CFrame = character.PrimaryPart.CFrame * CFrame.new(0, -3, 0)  
+    part.Parent = character  
+
+    local label = CreateBillboard(part, Vector3.new(0, 0, 0), "Distance_Label", PlayerTextSize - 2)  
+    label.Text = ""  
+end
+
+end
+
+local function UpdatePlayerESP(character, color, nameText)
+if not character:FindFirstChild("HumanoidRootPart") then return end
+local distance = GetDistance(character.HumanoidRootPart.Position)
+
+-- Update Name  
+if character.Head:FindFirstChild("ESP_Name") then  
+    character.Head.ESP_Name.TextLabel.Text = nameText  
+    character.Head.ESP_Name.TextLabel.TextSize = PlayerTextSize  
+end  
+
+-- Update Distance  
+if character:FindFirstChild("ESP_Distance") then  
+    character.ESP_Distance.Distance_Label.TextLabel.Text = tostring(distance) .. "m"  
+    character.ESP_Distance.Distance_Label.TextLabel.TextSize = PlayerTextSize - 2  
+    character.ESP_Distance.CFrame = character.PrimaryPart.CFrame * CFrame.new(0, -3, 0)  
+end
+
+end
+
+local function RemovePlayerESP(character)
+if character:FindFirstChild("ESP_Highlight") then character.ESP_Highlight:Destroy() end
+if character:FindFirstChild("Head") and character.Head:FindFirstChild("ESP_Name") then
+character.Head.ESP_Name:Destroy()
+end
+if character:FindFirstChild("ESP_Distance") then character.ESP_Distance:Destroy() end
+end
+
+
+---
+
+-- Generator ESP
+
+local function CreateGeneratorESP(gen)
+if not gen:FindFirstChild("Esp_Highlight") then
+local highlight = Instance.new("Highlight")
+highlight.Name = "Esp_Highlight"
+highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+highlight.Parent = gen
+end
+
+if not gen:FindFirstChild("Esp_Billboard") then  
+    local label = CreateBillboard(gen, Vector3.new(0, 3, 0), "Esp_Billboard", GeneratorTextSize)  
+    label.Text = "Generator"  
+end
+
+end
+
+local function UpdateGeneratorESP(gen)
+if gen:FindFirstChild("Esp_Highlight") and gen:FindFirstChild("Progress") then
+local progress = gen.Progress.Value
+gen.Esp_Billboard.TextLabel.Text = "Generator | " .. tostring(math.floor(progress)) .. "%"
+gen.Esp_Billboard.TextLabel.TextSize = GeneratorTextSize
+
+if progress >= 100 then  
+        gen.Esp_Highlight.FillColor = Color3.fromRGB(0, 255, 0) -- xanh lá  
+    else  
+        gen.Esp_Highlight.FillColor = Color3.fromRGB(255, 140, 0) -- cam  
+    end  
+end
+
+end
+
+local function RemoveGeneratorESP(gen)
+if gen:FindFirstChild("Esp_Highlight") then gen.Esp_Highlight:Destroy() end
+if gen:FindFirstChild("Esp_Billboard") then gen.Esp_Billboard:Destroy() end
+end
+
+
+---
+
+-- Main Loop
+
+RunService.Heartbeat:Connect(function()
+-- Player ESP
+if ESP_Killers or ESP_Survivors then
+for _, folder in pairs(workspace.Players:GetChildren()) do
+for _, char in pairs(folder:GetChildren()) do
+if char:IsA("Model") and char:FindFirstChild("HumanoidRootPart") then
+if folder.Name == "Killers" and ESP_Killers then
+CreatePlayerESP(char, Color3.fromRGB(255, 0,0), "Killer")
+UpdatePlayerESP(char, Color3.fromRGB(255, 0,0), "Killer")
+elseif folder.Name == "Survivors" and ESP_Survivors then
+CreatePlayerESP(char, Color3.fromRGB(0, 255, 0), "Survivor")
+UpdatePlayerESP(char, Color3.fromRGB(0, 255, 0), "Survivor")
+else
+RemovePlayerESP(char)
+end
+end
+end
+end
+end
+
+-- Generator ESP  
+if ESP_Generators then  
+    if workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Ingame") and workspace.Map.Ingame:FindFirstChild("Map") then  
+        for _, gen in pairs(workspace.Map.Ingame.Map:GetChildren()) do  
+            if gen.Name == "Generator" and gen:FindFirstChild("Progress") then  
+                CreateGeneratorESP(gen)  
+                UpdateGeneratorESP(gen)  
+            end  
+        end  
+    end  
+end
+
+end)
+
+
+---
+
+-- UI Toggle Functions
+
+function ToggleKillersESP(state) ESP_Killers = state end
+function ToggleSurvivorsESP(state) ESP_Survivors = state end
+function ToggleGeneratorESP(state) ESP_Generators = state end
+
+
+local Game = Tabs.Main:AddLeftGroupbox('Game')
+
+_G.LightToggle = false
+Game:AddToggle('MyToggle', {
+    Text = 'FullBright:,
+    Default = false, -- Default value (true / false)
+    Tooltip = 'This is a tooltip', -- Information shown when you hover over the toggle
+
+    Callback = function(Value)
+        _G.LightToggle = Value
+    end
+})
+
+
+function ToggleLighting(state)
+    if state then
+        Game.Lighting.Brightness = 4
+        Game.Lighting.FogEnd = 100000
+        Game.Lighting.GlobalShadows = false
+        Game.Lighting.ClockTime = 12
+    else
+        -- Giá tr mc ðnh ca game
+        Game.Lighting.Brightness = 2
+        Game.Lighting.FogEnd = 1000
+        Game.Lighting.GlobalShadows = true
+        Game.Lighting.ClockTime = 14
+    end
+end
+
